@@ -63,6 +63,18 @@ input[type=password],input[type=text]{
 #exporttext{width:100%;height:18rem;background:#fff;color:var(--ink);border:1px solid var(--line);
   border-radius:8px;padding:.9rem;font-family:var(--mono);font-size:.76rem;line-height:1.5;margin-top:1rem}
 .foot{color:var(--faint);font-size:.78rem;margin-top:2.2rem}
+#notedock{position:fixed;right:1rem;bottom:1rem;z-index:8;width:min(340px,calc(100vw - 2rem));
+  display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+#notebtn{font-size:.85rem;color:var(--rose-deep);border:1px solid var(--rose-faint);border-radius:999px;
+  padding:.5rem 1rem;background:var(--bg2);box-shadow:0 4px 16px rgba(43,31,24,.10)}
+#notepanel{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  padding:.8rem;box-shadow:0 6px 24px rgba(43,31,24,.12)}
+#notepen{min-height:4.5rem;max-height:34vh;overflow:auto;background:#fff;border:1px dashed var(--line);
+  border-radius:8px;padding:.7rem .8rem;font-size:.95rem;line-height:1.55;color:var(--ink)}
+#notepen:focus{outline:none;border-color:var(--rose);border-style:solid}
+#notepen:empty::before{content:attr(data-ph);color:var(--faint)}
+#notepanel .btnrow{margin:.7rem 0 0}
+#notepanel .btn{padding:.4rem .9rem;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -129,6 +141,21 @@ input[type=password],input[type=text]{
 </section>
 
 </main>
+
+<!-- traveling pen — available at any step -->
+<div id="notedock" hidden>
+  <div id="notepanel" hidden>
+    <div id="notepen" contenteditable="true" data-ph="type or paste — or record"></div>
+    <div class="btnrow">
+      <button class="btn" id="noterec">● Record</button>
+      <button class="btn" id="notesave">Save</button>
+      <button class="btn quiet" id="notecancel">Cancel</button>
+    </div>
+    <div class="err" id="noteerr" style="display:none"></div>
+  </div>
+  <button id="notebtn">✎ thought</button>
+</div>
+
 <audio id="au" preload="auto" playsinline></audio>
 <script>
 (function(){
@@ -205,7 +232,8 @@ var dwellIv=null, dwellLoops=0, dwellStart=0, dwellOpen=false;
 
 /* ---------- screens ---------- */
 var scr={setup:document.getElementById('setup'),session:document.getElementById('session'),done:document.getElementById('done')};
-function show(id){for(var k in scr)scr[k].classList.toggle('on',k===id);window.scrollTo(0,0)}
+function show(id){for(var k in scr)scr[k].classList.toggle('on',k===id);
+  document.getElementById('notedock').hidden=(id!=='session');window.scrollTo(0,0)}
 
 /* ---------- setup ---------- */
 var keyin=document.getElementById('keyin');
@@ -347,8 +375,7 @@ function stopRec(silent){
   if(rec&&rec.state!=='inactive'){if(silent)rec.onstop=function(){if(micStream){micStream.getTracks().forEach(function(t){t.stop()});micStream=null}};rec.stop()}
   rec=silent?null:rec;
 }
-function transcribe(blob,st){
-  setStage('<span class="word">transcribing…</span>');setButtons(null,null,null,null);
+function whisper(blob){
   var key=localStorage.getItem('owaudio_key');
   var ext=(blob.type.indexOf('mp4')>-1)?'mp4':'webm';
   var fd=new FormData();
@@ -357,10 +384,15 @@ function transcribe(blob,st){
   fd.append('language','en');
   fd.append('temperature','0');
   fd.append('prompt','Owning wanting course. Blackstone, Chapman, Hudson, midsection, facsimile, counterfeit, ferocity, wrathful, dantien, kua, desire settling on power, the dimmer, no clear border.');
-  fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{'Authorization':'Bearer '+key},body:fd})
-  .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+' '+t.slice(0,120))});return r.json()})
-  .then(function(j){
-    tx[st.key]={text:(j.text||'').trim(),at:Math.round((Date.now()-t0)/1000)};
+  return fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{'Authorization':'Bearer '+key},body:fd})
+    .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+' '+t.slice(0,120))});return r.json()})
+    .then(function(j){return (j.text||'').trim()});
+}
+function transcribe(blob,st){
+  setStage('<span class="word">transcribing…</span>');setButtons(null,null,null,null);
+  whisper(blob)
+  .then(function(text){
+    tx[st.key]={text:text,at:Math.round((Date.now()-t0)/1000)};
     save('tx',JSON.stringify(tx));renderFeed();
     setStage('<span class="word">✓ landed below — edit it there if needed</span>');
     setButtons('Continue →',function(){go(idx+1)},'Re-record',function(){go(idx)});
@@ -377,6 +409,58 @@ function transcribe(blob,st){
   });
 }
 
+/* ---------- traveling pen: pause anywhere, type/paste or record ---------- */
+var notebtn=document.getElementById('notebtn'),notepanel=document.getElementById('notepanel'),
+    notepen=document.getElementById('notepen'),noteerr=document.getElementById('noteerr'),
+    pausedByNote=false,nStream=null,nRec=null;
+function noteErr(m){noteerr.style.display=m?'block':'none';noteerr.textContent=m||''}
+notebtn.addEventListener('click',function(){
+  if(!notepanel.hidden){closeNote(false);return}
+  pausedByNote=(!au.paused&&SEQ[idx]&&SEQ[idx].t!=='dwell');
+  if(pausedByNote){au.pause();if(SEQ[idx].t==='say')bigbtn.textContent='Play'}
+  notepanel.hidden=false;notebtn.textContent='✕ close';notepen.focus();
+});
+document.getElementById('notecancel').addEventListener('click',function(){closeNote(false)});
+document.getElementById('notesave').addEventListener('click',function(){closeNote(true)});
+function closeNote(saveIt){
+  stopNoteRec();
+  if(saveIt){
+    var t=notepen.innerText.trim();
+    if(t){
+      var k='note_'+Date.now();
+      tx[k]={text:t,at:Math.round((Date.now()-t0)/1000),label:(SEQ[idx]?SEQ[idx].title:'')};
+      save('tx',JSON.stringify(tx));renderFeed();
+    }
+  }
+  notepen.textContent='';noteErr('');notepanel.hidden=true;notebtn.textContent='✎ thought';
+  if(pausedByNote){au.play().catch(function(){});if(SEQ[idx]&&SEQ[idx].t==='say')bigbtn.textContent='Pause'}
+  pausedByNote=false;
+}
+function stopNoteRec(){if(nRec&&nRec.state!=='inactive')nRec.stop();else if(nStream){nStream.getTracks().forEach(function(t){t.stop()});nStream=null}}
+document.getElementById('noterec').addEventListener('click',function(){
+  var b=this;
+  if(nRec&&nRec.state==='recording'){nRec.stop();return}
+  noteErr('');
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+    nStream=s;var chunks2=[];
+    var mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(function(m){return window.MediaRecorder&&MediaRecorder.isTypeSupported(m)})||'';
+    nRec=new MediaRecorder(s,mime?{mimeType:mime}:undefined);
+    nRec.ondataavailable=function(e){if(e.data.size)chunks2.push(e.data)};
+    nRec.onstop=function(){
+      nStream.getTracks().forEach(function(t){t.stop()});nStream=null;
+      b.textContent='● Record';
+      var blob=new Blob(chunks2,{type:nRec.mimeType||'audio/webm'});nRec=null;
+      if(blob.size<1200)return;
+      b.textContent='…transcribing';
+      whisper(blob).then(function(text){
+        b.textContent='● Record';
+        notepen.textContent=(notepen.innerText.trim()?notepen.innerText.trim()+' ':'')+text;
+      }).catch(function(e){b.textContent='● Record';noteErr('Transcription failed: '+e.message)});
+    };
+    nRec.start();b.textContent='⏹ Stop';
+  }).catch(function(e){noteErr('Mic: '+e.name)});
+});
+
 /* ---------- transcript feed ---------- */
 function labelFor(key){
   var s=SEQ.find(function(x){return x.t==='speak'&&x.key===key});return s?s.label:key;
@@ -385,7 +469,7 @@ function renderFeed(){
   feed.innerHTML='';
   Object.keys(tx).forEach(function(k){
     var e=document.createElement('div');e.className='entry';
-    e.innerHTML='<div class="lab">'+labelFor(k)+' · at '+fmt(tx[k].at)+'</div>'+
+    e.innerHTML='<div class="lab">'+(k.indexOf('note_')===0?('✎ thought · during '+(tx[k].label||'—')):labelFor(k))+' · at '+fmt(tx[k].at)+'</div>'+
       '<div class="txt" contenteditable="true"></div>';
     var t=e.querySelector('.txt');t.textContent=tx[k].text;
     t.addEventListener('input',function(){tx[k].text=t.textContent;save('tx',JSON.stringify(tx))});
@@ -406,6 +490,9 @@ function buildExport(){
   });
   ['d3_soak1','d3_soak2','d3_soak3','d3_soak4','d3_soak5','d3_sayitback'].forEach(function(k){
     if(tx[k]&&tx[k].text){out.push('**✎ '+k+'** · at '+fmt(tx[k].at),tx[k].text,'')}
+  });
+  Object.keys(tx).forEach(function(k){
+    if(k.indexOf('note_')===0&&tx[k].text){out.push('**✎ thought · during '+(tx[k].label||'—')+' · at '+fmt(tx[k].at)+'**',tx[k].text,'')}
   });
   if(tx.feedback&&tx.feedback.text){out.push('**Feedback**',tx.feedback.text,'')}
   return out.join('\n');
