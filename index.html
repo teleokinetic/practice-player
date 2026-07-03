@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Day 3 · audio</title>
+<style>
+:root{
+  --bg:#f8ece4; --bg2:#fdf6f0; --bg3:#f1e0d4;
+  --line:#e3cfc0; --line-soft:#ecdccf;
+  --ink:#2b1f18; --dim:#8a7264; --faint:#b09a8b;
+  --rose:#a63d5a; --rose-deep:#7d2c43; --rose-faint:#d8a8b5;
+  --display:"Optima","Candara","Seravek",-apple-system,sans-serif;
+  --sans:"Seravek","Avenir Next","Avenir",-apple-system,"Segoe UI",sans-serif;
+  --serif:"Charter","Iowan Old Style",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--sans);color:var(--ink);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+main{max-width:560px;margin:0 auto;padding:2.2rem 1.3rem 7rem}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--rose);outline-offset:3px;border-radius:2px}
+.eyebrow{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:600}
+h1{font-family:var(--display);font-weight:500;font-size:1.9rem;letter-spacing:.01em;margin:.4rem 0 .6rem}
+.sub{color:var(--dim);font-size:.95rem;max-width:34em}
+.screen{display:none}
+.screen.on{display:block}
+.card{background:var(--bg2);border:1px solid var(--line-soft);border-radius:12px;padding:1rem 1.1rem;margin:1rem 0}
+.card h3{font-family:var(--display);font-weight:500;font-size:1.05rem;margin-bottom:.5rem}
+.card p{font-size:.9rem;color:var(--dim);margin:.4rem 0}
+input[type=password],input[type=text]{
+  width:100%;padding:.6rem .8rem;border:1px solid var(--line);border-radius:8px;
+  background:#fff;color:var(--ink);font-size:.95rem}
+.btn{display:inline-block;font-size:.95rem;color:var(--rose-deep);border:1px solid var(--rose-faint);
+  border-radius:10px;padding:.6rem 1.3rem;background:var(--bg2)}
+.btn:hover{border-color:var(--rose-deep)}
+.btn.big{font-size:1.15rem;padding:.9rem 2rem;font-family:var(--display)}
+.btn.quiet{color:var(--dim);border-color:var(--line)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btnrow{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:1.1rem 0}
+.durrow{display:flex;align-items:center;gap:.5rem;padding:.45rem 0;border-bottom:1px dotted var(--line-soft);font-size:.92rem}
+.durrow .lab{flex:1}
+.durrow .val{font-family:var(--mono);min-width:3.6rem;text-align:center;color:var(--dim)}
+.durrow button{font-size:.8rem;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:.2rem .55rem;background:var(--bg2)}
+.durnote{color:var(--faint);font-size:.8rem;margin-top:.6rem}
+#stage{min-height:9rem;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;background:var(--bg2);border:1px solid var(--line-soft);border-radius:14px;
+  padding:1.6rem 1.2rem;margin:1.4rem 0}
+#stage .big{font-family:var(--mono);font-size:2.4rem;color:var(--ink);letter-spacing:.04em}
+#stage .word{font-family:var(--serif);font-size:1.05rem;color:var(--dim);max-width:26em}
+#stage .rec{color:var(--rose-deep);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.75rem}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#stage .rec.live{animation:pulse 1.4s ease infinite}
+.feed{margin-top:1.6rem}
+.feed h3{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:.5rem}
+.entry{border-left:2px solid var(--rose-faint);padding:.2rem 0 .2rem .9rem;margin:.9rem 0}
+.entry .lab{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.entry .txt{font-family:var(--serif);font-size:.98rem;line-height:1.6;margin-top:.2rem;min-height:1.2rem}
+.entry .txt:focus{outline:none;background:var(--bg2);border-radius:6px}
+.err{color:var(--rose-deep);font-size:.85rem;margin:.6rem 0}
+#exporttext{width:100%;height:18rem;background:#fff;color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:.9rem;font-family:var(--mono);font-size:.76rem;line-height:1.5;margin-top:1rem}
+.foot{color:var(--faint);font-size:.78rem;margin-top:2.2rem}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ============ SETUP ============ -->
+<section id="setup" class="screen on">
+  <p class="eyebrow">Day 3 · resting on power · audio</p>
+  <h1>What does the wanting rest on?</h1>
+  <p class="sub">Narration plays, gaps open, you speak, transcripts land below — and export as markdown at the end. Speech windows are always optional.</p>
+
+  <div class="card">
+    <h3>1 · Key</h3>
+    <p>Your OpenAI key transcribes the gaps. It stays in this browser only (localStorage) — never in the page's code or on any server.</p>
+    <input type="password" id="keyin" placeholder="sk-..." autocomplete="off">
+  </div>
+
+  <div class="card">
+    <h3>2 · Mic</h3>
+    <p>One-time permission. The mic only opens while you're recording a gap — never during narration or dwells, so speaker playback is fine.</p>
+    <div class="btnrow"><button class="btn" id="mictest">Test mic</button><span id="micstat" style="font-size:.85rem;color:var(--dim)"></span></div>
+  </div>
+
+  <div class="card">
+    <h3>3 · Dwells</h3>
+    <p>Every timer starts at zero — how long do you want this? <span style="color:var(--ink)">0:00 means open</span>: the dwell runs until you tap.</p>
+    <div id="durs"></div>
+    <p class="durnote">Dwells are silent audio, so they keep running if the screen locks. Speech windows need the screen on.</p>
+  </div>
+
+  <div class="btnrow">
+    <button class="btn big" id="begin">Begin</button>
+    <button class="btn quiet" id="resume" style="display:none">Resume session</button>
+    <button class="btn quiet" id="restart" style="display:none">Start over</button>
+  </div>
+  <p class="foot">First run: play ten seconds, tap record, say a line, check the transcript arrives. That smoke test covers everything worth worrying about.</p>
+</section>
+
+<!-- ============ SESSION ============ -->
+<section id="session" class="screen">
+  <p class="eyebrow" id="crumb"></p>
+  <h1 id="steptitle" style="font-size:1.5rem"></h1>
+  <div id="stage"></div>
+  <div class="btnrow">
+    <button class="btn" id="bigbtn"></button>
+    <button class="btn quiet" id="altbtn" style="display:none"></button>
+    <button class="btn quiet" id="skipbtn">Skip →</button>
+  </div>
+  <div class="err" id="errbox" style="display:none"></div>
+  <div class="feed"><h3>Transcripts this session</h3><div id="feed"></div></div>
+</section>
+
+<!-- ============ DONE ============ -->
+<section id="done" class="screen">
+  <p class="eyebrow">Day 3 · export</p>
+  <h1>The day, in your words</h1>
+  <p class="sub">Copy this into the course thread — same ritual as the artifact export. Entries are editable on the session screen before you export.</p>
+  <textarea id="exporttext" readonly></textarea>
+  <div class="btnrow">
+    <button class="btn" id="copybtn">Copy</button>
+    <button class="btn quiet" id="backbtn">← Back to session</button>
+    <button class="btn quiet" id="newbtn">New session</button>
+  </div>
+</section>
+
+</main>
+<audio id="au" preload="auto" playsinline></audio>
+<script>
+(function(){
+var NS='owaudio_d3_';
+function save(k,v){try{localStorage.setItem(NS+k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(NS+k)}catch(e){return null}}
+function jload(k,d){try{return JSON.parse(load(k))||d}catch(e){return d}}
+function fmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+/* ---------- flow ---------- */
+function S(id,crumb,title){return {t:'say',id:id,crumb:crumb,title:title}}
+function SPK(key,label,prompt,title,long){return {t:'speak',key:key,label:label,prompt:prompt,crumb:'Speech window',title:title,long:!!long}}
+function DW(key,title){return {t:'dwell',key:key,crumb:'Dwell',title:title}}
+var SEQ=[
+ S('arrive','Arrive','Arrive'),
+ S('soak_intro','Soak','Four voices, then yours'),
+ S('soak1','Soak · 1 of 5','Blackstone — the real thing'),
+ SPK('d3_soak1','✎ d3_soak1 · the real thing','prompt_generic','In your own words'),
+ S('soak1_verify','Soak · 1 of 5','The verify'),
+ S('soak2','Soak · 2 of 5','Blackstone — the counterfeit'),
+ SPK('d3_soak2','✎ d3_soak2 · the counterfeit','prompt_generic','In your own words'),
+ S('soak2_verify','Soak · 2 of 5','The verify'),
+ S('soak3','Soak · 3 of 5','Chapman — “Power”'),
+ SPK('d3_soak3','✎ d3_soak3 · Chapman, Power','prompt_generic','In your own words'),
+ S('soak3_verify','Soak · 3 of 5','The verify'),
+ S('soak4','Soak · 4 of 5','Chapman — wrathful practice'),
+ SPK('d3_soak4','✎ d3_soak4 · wrathful','prompt_generic','In your own words'),
+ S('soak4_verify','Soak · 4 of 5','The verify'),
+ S('soak5','Soak · 5 of 5','The fifth voice is yours'),
+ SPK('d3_soak5','✎ d3_soak5 · where does it land now','',  'Where does it land now?'),
+ S('practice_intro','Practice','Midsection-anchored'),
+ S('st_settle','Practice · 1 of 8','Settle'),
+ DW('settle','Settle'),
+ SPK('d3_st_settle','Settle — notes','prompt_generic','What showed up?'),
+ S('st_power','Practice · 2 of 8','Midsection — power at home'),
+ DW('power','Midsection — power at home'),
+ SPK('d3_st_power','Power at home — notes','prompt_generic','What showed up?'),
+ S('st_dimmer','Practice · 3 of 8','The dimmer'),
+ DW('dimmer','The dimmer'),
+ SPK('d3_st_dimmer','The dimmer — notes','prompt_dimmer','Intensifying vs. pushing'),
+ S('st_blend','Practice · 4 of 8','Desire joins'),
+ DW('blend','Desire joins'),
+ SPK('d3_st_blend','Desire joins — notes','prompt_generic','What showed up?'),
+ S('st_border','Practice · 5 of 8','No clear border'),
+ DW('border','No clear border'),
+ SPK('d3_st_border','No clear border — notes','prompt_border','What did the border turn out to be?'),
+ S('st_ask','Practice · 6 of 8','An ask arrives'),
+ DW('ask','An ask arrives'),
+ SPK('d3_st_ask','An ask arrives — notes','prompt_ask','Did both wants stay visible?'),
+ S('st_own','Practice · 7 of 8','Optional — your own situation'),
+ DW('own','Your own situation'),
+ SPK('d3_st_own','Your own situation — notes','prompt_generic','What held?'),
+ S('st_everything','Practice · 8 of 8','Everything'),
+ DW('everything','Everything'),
+ SPK('d3_st_everything','Everything — notes','prompt_generic','What showed up?'),
+ S('sayitback','Say it back','Ground, or push?'),
+ SPK('d3_sayitback','✎ d3_sayitback · ground or push','','Ground, or push?',true),
+ S('sayitback_sources','Say it back','The sources'),
+ SPK('feedback','Feedback','prompt_feedback','For the build'),
+ S('close','Close','The field note stays in the field')
+];
+var DWELLS=[['settle','Settle'],['power','Midsection — power at home'],['dimmer','The dimmer'],
+ ['blend','Desire joins'],['border','No clear border'],['ask','An ask arrives'],
+ ['own','Your own situation (optional)'],['everything','Everything']];
+
+/* ---------- state ---------- */
+var idx=Number(load('idx'))||0;
+var tx=jload('tx',{});        // key -> {text, at}
+var sat=jload('sat',{});      // dwell key -> seconds actually dwelt
+var t0=Number(load('t0'))||0; // session epoch start
+var au=document.getElementById('au');
+var micStream=null, rec=null, chunks=[], recTimer=null, recStart=0, lastBlob=null, lastKey=null;
+var dwellIv=null, dwellLoops=0, dwellStart=0, dwellOpen=false;
+
+/* ---------- screens ---------- */
+var scr={setup:document.getElementById('setup'),session:document.getElementById('session'),done:document.getElementById('done')};
+function show(id){for(var k in scr)scr[k].classList.toggle('on',k===id);window.scrollTo(0,0)}
+
+/* ---------- setup ---------- */
+var keyin=document.getElementById('keyin');
+keyin.value=localStorage.getItem('owaudio_key')||'';
+keyin.addEventListener('change',function(){localStorage.setItem('owaudio_key',keyin.value.trim())});
+document.getElementById('mictest').addEventListener('click',function(){
+  var st=document.getElementById('micstat');st.textContent='asking…';
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+    s.getTracks().forEach(function(t){t.stop()});st.textContent='✓ mic works';
+  }).catch(function(e){st.textContent='✗ '+e.name});
+});
+var dursEl=document.getElementById('durs');
+DWELLS.forEach(function(d){
+  var key=d[0],row=document.createElement('div');row.className='durrow';
+  var cur=Number(load('dur_'+key))||0;
+  row.innerHTML='<span class="lab">'+d[1]+'</span><button data-d="-30">−30s</button>'+
+    '<span class="val">'+(cur?fmt(cur):'open')+'</span><button data-d="30">+30s</button>';
+  row.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){
+      cur=Math.max(0,Math.min(1800,cur+Number(b.getAttribute('data-d'))));
+      save('dur_'+key,String(cur));
+      row.querySelector('.val').textContent=cur?fmt(cur):'open';
+    });
+  });
+  dursEl.appendChild(row);
+});
+if(idx>0&&idx<SEQ.length){
+  document.getElementById('resume').style.display='inline-block';
+  document.getElementById('restart').style.display='inline-block';
+}
+document.getElementById('begin').addEventListener('click',function(){
+  if(!localStorage.getItem('owaudio_key')){keyin.focus();return}
+  resetSession();wake();show('session');go(0);
+});
+document.getElementById('resume').addEventListener('click',function(){wake();show('session');go(idx)});
+document.getElementById('restart').addEventListener('click',function(){resetSession();renderFeed();
+  document.getElementById('resume').style.display='none';document.getElementById('restart').style.display='none'});
+function resetSession(){idx=0;tx={};sat={};t0=Date.now();
+  save('idx','0');save('tx','{}');save('sat','{}');save('t0',String(t0))}
+
+/* ---------- wake lock ---------- */
+var wl=null;
+function wake(){if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){wl=l}).catch(function(){})}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&!scr.setup.classList.contains('on'))wake()});
+
+/* ---------- session ui ---------- */
+var crumb=document.getElementById('crumb'),title=document.getElementById('steptitle'),
+    stage=document.getElementById('stage'),bigbtn=document.getElementById('bigbtn'),
+    altbtn=document.getElementById('altbtn'),skipbtn=document.getElementById('skipbtn'),
+    errbox=document.getElementById('errbox'),feed=document.getElementById('feed');
+function setStage(html){stage.innerHTML=html}
+function setButtons(main,mainFn,alt,altFn){
+  bigbtn.textContent=main||'';bigbtn.style.display=main?'inline-block':'none';bigbtn.onclick=mainFn||null;
+  altbtn.textContent=alt||'';altbtn.style.display=alt?'inline-block':'none';altbtn.onclick=altFn||null;
+}
+function err(msg){errbox.style.display=msg?'block':'none';errbox.textContent=msg||''}
+
+function go(i){
+  clearInterval(dwellIv);dwellIv=null;err('');
+  if(i>=SEQ.length){finish();return}
+  idx=i;save('idx',String(i));
+  var st=SEQ[i];crumb.textContent=st.crumb;title.textContent=st.title;
+  if(st.t==='say')doSay(st);
+  else if(st.t==='dwell')doDwell(st);
+  else doSpeak(st);
+}
+skipbtn.addEventListener('click',function(){au.pause();au.onended=null;stopRec(true);go(idx+1)});
+
+/* ---------- narration ---------- */
+function play(id,onend){au.onended=onend||null;au.src='audio/'+id+'.mp3';au.play().catch(function(e){err('Tap play — '+e.name)})}
+function doSay(st){
+  setStage('<span class="word">narration</span>');
+  setButtons('Pause',function(){
+    if(au.paused){au.play();bigbtn.textContent='Pause'}else{au.pause();bigbtn.textContent='Play'}
+  },'Replay',function(){play(st.id,function(){go(idx+1)})});
+  play(st.id,function(){go(idx+1)});
+}
+
+/* ---------- dwell: looped silence -> chime ---------- */
+function doDwell(st){
+  var dur=Number(load('dur_'+st.key))||0;dwellOpen=(dur===0);
+  dwellLoops=0;dwellStart=Date.now();
+  function tick(){
+    var el=(Date.now()-dwellStart)/1000;
+    setStage('<span class="big">'+(dwellOpen?fmt(el):fmt(Math.max(0,dur-el)))+'</span>'+
+      '<span class="word">'+(dwellOpen?'open dwell — end when you want':'the chime is permission, not a demand')+'</span>');
+    if(!dwellOpen&&el>=dur){endDwell(st)}
+  }
+  dwellIv=setInterval(tick,500);tick();
+  setButtons(dwellOpen?'End dwell':'End early',function(){endDwell(st)},null,null);
+  loopSilence();
+}
+function loopSilence(){au.onended=function(){dwellLoops++;loopSilence()};au.src='audio/silence30.mp3';au.play().catch(function(){})}
+function endDwell(st){
+  clearInterval(dwellIv);dwellIv=null;au.onended=null;
+  sat[st.key]=Math.round((Date.now()-dwellStart)/1000);save('sat',JSON.stringify(sat));
+  au.src='audio/chime.mp3';
+  au.onended=function(){go(idx+1)};
+  au.play().catch(function(){go(idx+1)});
+}
+
+/* ---------- speech windows ---------- */
+function doSpeak(st){
+  lastKey=st.key;lastBlob=null;
+  function idle(){
+    var existing=tx[st.key];
+    setStage('<span class="word">'+st.title+(existing?'<br><em>already answered — record again to replace</em>':'')+'</span>');
+    setButtons('● Record',startRec,'Continue →',function(){go(idx+1)});
+  }
+  if(st.prompt){play(st.prompt,idle);setStage('<span class="word">…</span>');setButtons(null,null,null,null)}
+  else idle();
+
+  function startRec(){
+    err('');
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+      micStream=s;chunks=[];
+      var mime=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(function(m){return window.MediaRecorder&&MediaRecorder.isTypeSupported(m)})||'';
+      rec=new MediaRecorder(s,mime?{mimeType:mime}:undefined);
+      rec.ondataavailable=function(e){if(e.data.size)chunks.push(e.data)};
+      rec.onstop=function(){
+        micStream.getTracks().forEach(function(t){t.stop()});micStream=null;
+        var blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
+        if(blob.size<1200){idle();return}
+        lastBlob=blob;transcribe(blob,st);
+      };
+      recStart=Date.now();rec.start();
+      recTimer=setInterval(function(){
+        var el=(Date.now()-recStart)/1000;
+        setStage('<span class="rec live">● recording</span><span class="big">'+fmt(el)+'</span>');
+        if(el>=180)stopRec();
+      },400);
+      setStage('<span class="rec live">● recording</span><span class="big">0:00</span>');
+      setButtons('⏹ Stop',function(){stopRec()},null,null);
+    }).catch(function(e){err('Mic: '+e.name)});
+  }
+}
+function stopRec(silent){
+  clearInterval(recTimer);recTimer=null;
+  if(rec&&rec.state!=='inactive'){if(silent)rec.onstop=function(){if(micStream){micStream.getTracks().forEach(function(t){t.stop()});micStream=null}};rec.stop()}
+  rec=silent?null:rec;
+}
+function transcribe(blob,st){
+  setStage('<span class="word">transcribing…</span>');setButtons(null,null,null,null);
+  var key=localStorage.getItem('owaudio_key');
+  var ext=(blob.type.indexOf('mp4')>-1)?'mp4':'webm';
+  var fd=new FormData();
+  fd.append('file',blob,'clip.'+ext);
+  fd.append('model','whisper-1');
+  fd.append('language','en');
+  fd.append('temperature','0');
+  fd.append('prompt','Owning wanting course. Blackstone, Chapman, Hudson, midsection, facsimile, counterfeit, ferocity, wrathful, dantien, kua, desire settling on power, the dimmer, no clear border.');
+  fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{'Authorization':'Bearer '+key},body:fd})
+  .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(r.status+' '+t.slice(0,120))});return r.json()})
+  .then(function(j){
+    tx[st.key]={text:(j.text||'').trim(),at:Math.round((Date.now()-t0)/1000)};
+    save('tx',JSON.stringify(tx));renderFeed();
+    setStage('<span class="word">✓ landed below — edit it there if needed</span>');
+    setButtons('Continue →',function(){go(idx+1)},'Re-record',function(){go(idx)});
+  })
+  .catch(function(e){
+    err('Transcription failed: '+e.message);
+    setStage('<span class="word">the recording is still here</span>');
+    setButtons('Retry',function(){transcribe(blob,st)},'Type instead',function(){
+      tx[st.key]={text:'',at:Math.round((Date.now()-t0)/1000)};save('tx',JSON.stringify(tx));
+      renderFeed();err('');
+      setStage('<span class="word">type into the entry below, then continue</span>');
+      setButtons('Continue →',function(){go(idx+1)},null,null);
+    });
+  });
+}
+
+/* ---------- transcript feed ---------- */
+function labelFor(key){
+  var s=SEQ.find(function(x){return x.t==='speak'&&x.key===key});return s?s.label:key;
+}
+function renderFeed(){
+  feed.innerHTML='';
+  Object.keys(tx).forEach(function(k){
+    var e=document.createElement('div');e.className='entry';
+    e.innerHTML='<div class="lab">'+labelFor(k)+' · at '+fmt(tx[k].at)+'</div>'+
+      '<div class="txt" contenteditable="true"></div>';
+    var t=e.querySelector('.txt');t.textContent=tx[k].text;
+    t.addEventListener('input',function(){tx[k].text=t.textContent;save('tx',JSON.stringify(tx))});
+    feed.appendChild(e);
+  });
+}
+renderFeed();
+
+/* ---------- export ---------- */
+function buildExport(){
+  var out=['## Day 3 · Resting on power — audio session export ('+new Date().toISOString().slice(0,10)+')',''];
+  DWELLS.forEach(function(d){
+    var k=d[0],note=tx['d3_st_'+k];
+    if(!sat[k]&&!(note&&note.text))return;
+    out.push('**'+d[1].replace(' (optional)','')+'**'+(sat[k]?' — ✓ sat ('+fmt(sat[k])+')':''));
+    if(note&&note.text)out.push(note.text);
+    out.push('');
+  });
+  ['d3_soak1','d3_soak2','d3_soak3','d3_soak4','d3_soak5','d3_sayitback'].forEach(function(k){
+    if(tx[k]&&tx[k].text){out.push('**✎ '+k+'** · at '+fmt(tx[k].at),tx[k].text,'')}
+  });
+  if(tx.feedback&&tx.feedback.text){out.push('**Feedback**',tx.feedback.text,'')}
+  return out.join('\n');
+}
+function finish(){document.getElementById('exporttext').value=buildExport();show('done')}
+document.getElementById('copybtn').addEventListener('click',function(){
+  var ta=document.getElementById('exporttext');ta.select();
+  try{navigator.clipboard.writeText(ta.value)}catch(e){document.execCommand('copy')}
+  this.textContent='Copied ✓';var b=this;setTimeout(function(){b.textContent='Copy'},1800);
+});
+document.getElementById('backbtn').addEventListener('click',function(){show('session');go(Math.min(idx,SEQ.length-1))});
+document.getElementById('newbtn').addEventListener('click',function(){resetSession();renderFeed();show('setup')});
+})();
+</script>
+</body>
+</html>
