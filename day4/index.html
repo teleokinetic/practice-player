@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Day 3 · audio</title>
-<link rel="stylesheet" href="style.css">
+<title>Day 4 · audio</title>
+<link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <main>
 
 <!-- ============ SETUP ============ -->
 <section id="setup" class="screen on">
-  <p class="eyebrow">Day 3 · resting on power · audio</p>
-  <h1>What does the wanting rest on?</h1>
-  <p class="sub">Narration plays, gaps open, you speak, transcripts land below — and export as markdown at the end. Speech windows are always optional.</p>
+  <p class="eyebrow">Day 4 · Hudson's handle · audio</p>
+  <h1>Two doors, one room?</h1>
+  <p class="sub">The full sweep returns — same stations, same breath — with the attunement phrase swapped: <em>feel what it is to want, without a subject</em>. One new station near the end is yours: many wants at once.</p>
   <p class="sub" id="totals" style="margin-top:.5rem;font-family:var(--mono);font-size:.8rem"></p>
-  <p class="sub" style="margin-top:.4rem"><a href="day4/">Day 4 · Hudson's handle →</a></p>
+  <p class="sub" style="margin-top:.4rem"><a href="../">← Day 3 · Resting on power</a></p>
 
   <div class="card">
     <h3>1 · Key</h3>
@@ -41,7 +41,7 @@
 
   <div class="card">
     <h3>3 · Dwells</h3>
-    <p>Every timer starts at zero — how long do you want this? <span style="color:var(--ink)">0:00 means open</span>: the dwell runs until you tap.</p>
+    <p>Every timer starts at zero — how long do you want this? <span style="color:var(--ink)">0:00 means open</span>: the dwell runs until you tap. Ground is a doorstep, not a room — keep it short.</p>
     <div id="durs"></div>
     <p class="durnote">Dwells are silent audio, so they keep running if the screen locks. Speech windows need the screen on.</p>
   </div>
@@ -70,7 +70,7 @@
 
 <!-- ============ DONE ============ -->
 <section id="done" class="screen">
-  <p class="eyebrow">Day 3 · export</p>
+  <p class="eyebrow">Day 4 · export</p>
   <h1>The day, in your words</h1>
   <p class="sub">Copy this into the course thread — same ritual as the artifact export. Entries are editable on the session screen before you export.</p>
   <textarea id="exporttext" readonly></textarea>
@@ -103,63 +103,65 @@ function S(id,crumb,title){return {t:'say',id:id,crumb:crumb,title:title}}
 function SPK(key,label,prompt,title){return {t:'speak',key:key,label:label,prompt:prompt,crumb:'Speech window',title:title}}
 function DW(key,title){return {t:'dwell',key:key,crumb:'Dwell',title:title}}
 window.DAYCFG={
- ns:'owaudio_d3_', audio:'audio/', gate:'gate.json',
- exportTitle:'Day 3 · Resting on power — audio session export',
- stationPenPrefix:'d3_st_',
- pens:['d3_soak1','d3_soak2','d3_soak3','d3_soak4','d3_soak5','d3_sayitback'],
- dwells:[['settle','Settle'],['power','Midsection — power at home'],['dimmer','The dimmer'],
-  ['blend','Desire joins'],['border','No clear border'],['ask','An ask arrives'],
-  ['own','Your own situation (optional)'],['everything','Everything']],
+ ns:'owaudio_d4_', audio:'../audio/', gate:'../gate.json',
+ exportTitle:'Day 4 · Hudson’s handle — audio session export',
+ stationPenPrefix:'d4_st_',
+ pens:['d4_soak1','d4_soak2','d4_soak3','d4_soak4','d4_sayitback'],
+ dwells:[['settle','Settle'],['ground','Ground (doorstep)'],['pelvis','Pelvis'],['midsection','Midsection'],
+  ['chest','Chest'],['neck','Neck'],['head','Head'],['wholebody','Whole body'],
+  ['manywants','Many wants at once'],['everything','Everything']],
  seq:[
-  S('arrive','Arrive','Arrive'),
-  S('soak_intro','Soak','Four voices, then yours'),
-  S('soak1','Soak · 1 of 5','Blackstone — the real thing'),
-  SPK('d3_soak1','✎ d3_soak1 · the real thing','prompt_generic','In your own words'),
-  S('soak1_verify','Soak · 1 of 5','The verify'),
-  S('soak2','Soak · 2 of 5','Blackstone — the counterfeit'),
-  SPK('d3_soak2','✎ d3_soak2 · the counterfeit','prompt_generic','In your own words'),
-  S('soak2_verify','Soak · 2 of 5','The verify'),
-  S('soak3','Soak · 3 of 5','Chapman — “Power”'),
-  SPK('d3_soak3','✎ d3_soak3 · Chapman, Power','prompt_generic','In your own words'),
-  S('soak3_verify','Soak · 3 of 5','The verify'),
-  S('soak4','Soak · 4 of 5','Chapman — wrathful practice'),
-  SPK('d3_soak4','✎ d3_soak4 · wrathful','prompt_generic','In your own words'),
-  S('soak4_verify','Soak · 4 of 5','The verify'),
-  S('soak5','Soak · 5 of 5','The fifth voice is yours'),
-  SPK('d3_soak5','✎ d3_soak5 · where does it land now','','Where does it land now?'),
-  S('practice_intro','Practice','Midsection-anchored'),
-  S('st_settle','Practice · 1 of 8','Settle'),
+  S('d4_arrive','Arrive','Arrive'),
+  S('d4_soak1','Soak · 1 of 4','The instruction, once more'),
+  SPK('d4_soak1','✎ d4_soak1 · the instruction','prompt_generic','In your own words'),
+  S('d4_soak1_verify','Soak · 1 of 4','The verify'),
+  S('d4_soak2','Soak · 2 of 4','Hudson — you will be destroyed, or evolve'),
+  SPK('d4_soak2','✎ d4_soak2 · identity and evolution','prompt_generic','In your own words'),
+  S('d4_soak2_verify','Soak · 2 of 4','The verify'),
+  S('d4_soak3','Soak · 3 of 4','Hudson — direction is enough'),
+  SPK('d4_soak3','✎ d4_soak3 · direction','prompt_generic','In your own words'),
+  S('d4_soak3_verify','Soak · 3 of 4','The verify'),
+  S('d4_soak4','Soak · 4 of 4','Your Day 1 words — still true?'),
+  SPK('d4_soak4','✎ d4_soak4 · updating your description','','What has changed?'),
+  S('d4_practice_intro','Practice','The sweep, new handle'),
+  S('st_settle','Practice · 1 of 10','Settle'),
   DW('settle','Settle'),
-  SPK('d3_st_settle','Settle — notes','prompt_generic','What showed up?'),
-  S('st_power','Practice · 2 of 8','Midsection — power at home'),
-  DW('power','Midsection — power at home'),
-  SPK('d3_st_power','Power at home — notes','prompt_generic','What showed up?'),
-  S('st_dimmer','Practice · 3 of 8','The dimmer'),
-  DW('dimmer','The dimmer'),
-  SPK('d3_st_dimmer','The dimmer — notes','prompt_dimmer','Intensifying vs. pushing'),
-  S('st_blend','Practice · 4 of 8','Desire joins'),
-  DW('blend','Desire joins'),
-  SPK('d3_st_blend','Desire joins — notes','prompt_generic','What showed up?'),
-  S('st_border','Practice · 5 of 8','No clear border'),
-  DW('border','No clear border'),
-  SPK('d3_st_border','No clear border — notes','prompt_border','What did the border turn out to be?'),
-  S('st_ask','Practice · 6 of 8','An ask arrives'),
-  DW('ask','An ask arrives'),
-  SPK('d3_st_ask','An ask arrives — notes','prompt_ask','Did both wants stay visible?'),
-  S('st_own','Practice · 7 of 8','Optional — your own situation'),
-  DW('own','Your own situation'),
-  SPK('d3_st_own','Your own situation — notes','prompt_generic','What held?'),
-  S('st_everything','Practice · 8 of 8','Everything'),
+  SPK('d4_st_settle','Settle — notes','prompt_generic','What showed up?'),
+  S('d4_st_ground','Practice · 2 of 10','Ground (doorstep)'),
+  DW('ground','Ground'),
+  SPK('d4_st_ground','Ground — notes','prompt_generic','What showed up?'),
+  S('d4_st_pelvis','Practice · 3 of 10','Pelvis'),
+  DW('pelvis','Pelvis'),
+  SPK('d4_st_pelvis','Pelvis — notes','prompt_generic','What showed up?'),
+  S('d4_st_midsection','Practice · 4 of 10','Midsection'),
+  DW('midsection','Midsection'),
+  SPK('d4_st_midsection','Midsection — notes','prompt_generic','What showed up?'),
+  S('d4_st_chest','Practice · 5 of 10','Chest'),
+  DW('chest','Chest'),
+  SPK('d4_st_chest','Chest — notes','prompt_generic','What showed up?'),
+  S('d4_st_neck','Practice · 6 of 10','Neck'),
+  DW('neck','Neck'),
+  SPK('d4_st_neck','Neck — notes','prompt_generic','What showed up?'),
+  S('d4_st_head','Practice · 7 of 10','Head'),
+  DW('head','Head'),
+  SPK('d4_st_head','Head — notes','prompt_generic','What showed up?'),
+  S('d4_st_wholebody','Practice · 8 of 10','Whole body'),
+  DW('wholebody','Whole body'),
+  SPK('d4_st_wholebody','Whole body — notes','prompt_generic','What showed up?'),
+  S('d4_st_manywants','Practice · 9 of 10','Many wants at once — your station'),
+  DW('manywants','Many wants at once'),
+  SPK('d4_st_manywants','Many wants — notes','d4_prompt_manywants','All of them at once'),
+  S('d4_st_everything','Practice · 10 of 10','Everything'),
   DW('everything','Everything'),
-  SPK('d3_st_everything','Everything — notes','prompt_generic','What showed up?'),
-  S('sayitback','Say it back','Ground, or push?'),
-  SPK('d3_sayitback','✎ d3_sayitback · ground or push','','Ground, or push?'),
-  S('sayitback_sources','Say it back','The sources'),
+  SPK('d4_st_everything','Everything — notes','prompt_generic','What showed up?'),
+  S('d4_sayitback','Say it back','Two doors, one room?'),
+  SPK('d4_sayitback','✎ d4_sayitback · two doors','','Two doors, one room?'),
+  S('d4_sayitback_sources','Say it back','The handles, side by side'),
   SPK('feedback','Feedback','prompt_feedback','For the build'),
-  S('close','Close','The field note stays in the field')
+  S('d4_close','Close','Ten seconds of coexistence')
  ]
 };
 </script>
-<script src="player.js"></script>
+<script src="../player.js"></script>
 </body>
 </html>

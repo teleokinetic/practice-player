@@ -1,14 +1,15 @@
 #!/bin/zsh
 # Build TTS segments for the practice player.
-# Usage: ./scripts/build_audio.sh   (run from repo root; needs OPENAI_API_KEY, ffmpeg)
+# Usage: ./scripts/build_audio.sh [segments.json]   (run from repo root; needs OPENAI_API_KEY, ffmpeg)
 # Voice settings follow the ATM audio convention: nova / 0.80 / tts-1-hd.
 set -e
+SEGS="${1:-scripts/segments.json}"
 cd "$(dirname "$0")/.."
 mkdir -p audio/raw
 
-python3 - <<'PY' > /tmp/seglist.txt
-import json
-for k, v in json.load(open('scripts/segments.json')).items():
+python3 - "$SEGS" <<'PY' > /tmp/seglist.txt
+import json, sys
+for k, v in json.load(open(sys.argv[1])).items():
     print(k + '\t' + v.replace('\n', ' '))
 PY
 
