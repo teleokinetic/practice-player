@@ -33,10 +33,13 @@ h1{font-family:var(--display);font-weight:500;font-size:1.9rem;letter-spacing:.0
 input[type=password],input[type=text]{
   width:100%;padding:.6rem .8rem;border:1px solid var(--line);border-radius:8px;
   background:#fff;color:var(--ink);font-size:.95rem}
-.btn{display:inline-block;font-size:.95rem;color:var(--rose-deep);border:1px solid var(--rose-faint);
-  border-radius:10px;padding:.6rem 1.3rem;background:var(--bg2)}
+.btn{display:inline-block;font-size:1.05rem;color:var(--rose-deep);border:1px solid var(--rose-faint);
+  border-radius:12px;padding:.75rem 1.4rem;background:var(--bg2)}
 .btn:hover{border-color:var(--rose-deep)}
-.btn.big{font-size:1.15rem;padding:.9rem 2rem;font-family:var(--display)}
+.btn.big{font-size:1.25rem;padding:1rem 2.2rem;font-family:var(--display)}
+#session .btnrow .btn{font-size:1.15rem;padding:.95rem 1.5rem}
+#session #bigbtn{flex:1 1 auto;min-height:3.4rem}
+#clockline{font-family:var(--mono);font-size:.78rem;color:var(--dim);margin:.2rem 0 0;letter-spacing:.04em}
 .btn.quiet{color:var(--dim);border-color:var(--line)}
 .btn:disabled{opacity:.4;pointer-events:none}
 .btnrow{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:1.1rem 0}
@@ -48,7 +51,7 @@ input[type=password],input[type=text]{
 #stage{min-height:9rem;display:flex;flex-direction:column;justify-content:center;align-items:center;
   text-align:center;background:var(--bg2);border:1px solid var(--line-soft);border-radius:14px;
   padding:1.6rem 1.2rem;margin:1.4rem 0}
-#stage .big{font-family:var(--mono);font-size:2.4rem;color:var(--ink);letter-spacing:.04em}
+#stage .big{font-family:var(--mono);font-size:3rem;color:var(--ink);letter-spacing:.04em}
 #stage .word{font-family:var(--serif);font-size:1.05rem;color:var(--dim);max-width:26em}
 #stage .rec{color:var(--rose-deep);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.75rem}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
@@ -85,6 +88,7 @@ input[type=password],input[type=text]{
   <p class="eyebrow">Day 3 · resting on power · audio</p>
   <h1>What does the wanting rest on?</h1>
   <p class="sub">Narration plays, gaps open, you speak, transcripts land below — and export as markdown at the end. Speech windows are always optional.</p>
+  <p class="sub" id="totals" style="margin-top:.5rem;font-family:var(--mono);font-size:.8rem"></p>
 
   <div class="card">
     <h3>1 · Key</h3>
@@ -117,6 +121,7 @@ input[type=password],input[type=text]{
 <section id="session" class="screen">
   <p class="eyebrow" id="crumb"></p>
   <h1 id="steptitle" style="font-size:1.5rem"></h1>
+  <div id="clockline">session <span id="clock">0:00</span> · sat <span id="satsum">0:00</span></div>
   <div id="stage"></div>
   <div class="btnrow">
     <button class="btn" id="bigbtn"></button>
@@ -264,6 +269,18 @@ if(idx>0&&idx<SEQ.length){
   document.getElementById('resume').style.display='inline-block';
   document.getElementById('restart').style.display='inline-block';
 }
+function satTotal(){var s=0;for(var k in sat)s+=sat[k]||0;return s}
+(function(){
+  var sessions=jload('sessions',{}),n=0,dur=0,satd=0;
+  for(var k in sessions){n++;dur+=sessions[k].dur||0;satd+=sessions[k].sat||0}
+  if(n)document.getElementById('totals').textContent=
+    'practiced here: '+fmt(dur)+' across '+n+' session'+(n>1?'s':'')+' · '+fmt(satd)+' in dwells';
+})();
+setInterval(function(){
+  if(!scr.session.classList.contains('on')||!t0)return;
+  document.getElementById('clock').textContent=fmt((Date.now()-t0)/1000);
+  document.getElementById('satsum').textContent=fmt(satTotal());
+},1000);
 document.getElementById('begin').addEventListener('click',function(){
   if(!localStorage.getItem('owaudio_key')){keyin.focus();return}
   resetSession();wake();show('session');go(0);
@@ -480,7 +497,8 @@ renderFeed();
 
 /* ---------- export ---------- */
 function buildExport(){
-  var out=['## Day 3 · Resting on power — audio session export ('+new Date().toISOString().slice(0,10)+')',''];
+  var out=['## Day 3 · Resting on power — audio session export ('+new Date().toISOString().slice(0,10)+')',
+    '*session '+fmt((Date.now()-t0)/1000)+' · dwells sat '+fmt(satTotal())+'*',''];
   DWELLS.forEach(function(d){
     var k=d[0],note=tx['d3_st_'+k];
     if(!sat[k]&&!(note&&note.text))return;
@@ -497,7 +515,12 @@ function buildExport(){
   if(tx.feedback&&tx.feedback.text){out.push('**Feedback**',tx.feedback.text,'')}
   return out.join('\n');
 }
-function finish(){document.getElementById('exporttext').value=buildExport();show('done')}
+function finish(){
+  var sessions=jload('sessions',{});
+  sessions[t0]={dur:Math.round((Date.now()-t0)/1000),sat:satTotal()};
+  save('sessions',JSON.stringify(sessions));
+  document.getElementById('exporttext').value=buildExport();show('done');
+}
 document.getElementById('copybtn').addEventListener('click',function(){
   var ta=document.getElementById('exporttext');ta.select();
   try{navigator.clipboard.writeText(ta.value)}catch(e){document.execCommand('copy')}
