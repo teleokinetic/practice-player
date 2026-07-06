@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Day 5 · audio</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main>
+
+<!-- ============ SETUP ============ -->
+<section id="setup" class="screen on">
+  <p class="eyebrow">Day 5 · The tamperers · audio</p>
+  <h1>Playing to win</h1>
+  <p class="sub">The don't-want inventory, fused into your station: <em>many wants at once</em> runs long today, and the tamperers you watched yesterday are the material. The guidance is <strong>sparse</strong> — stations are named, not instructed. You carry the instructions now; asking for one is data, not failure.</p>
+  <p class="sub" id="totals" style="margin-top:.5rem;font-family:var(--mono);font-size:.8rem"></p>
+  <p class="sub" style="margin-top:.4rem"><a href="../day4/">← Day 4 · Hudson's handle</a></p>
+
+  <div class="card">
+    <h3>1 · Key</h3>
+    <div id="passrow" hidden>
+      <p>Passphrase unlocks the transcription key on this device (it then sticks in this browser).</p>
+      <input type="password" id="passin" placeholder="passphrase" autocomplete="current-password">
+      <div class="btnrow"><button class="btn" id="unlockbtn">Unlock</button></div>
+    </div>
+    <details id="rawkeywrap" open>
+      <summary style="font-size:.85rem;color:var(--dim)">paste a raw API key</summary>
+      <p>It stays in this browser only (localStorage) — never in the page's code or on any server.</p>
+      <input type="password" id="keyin" placeholder="sk-..." autocomplete="off" style="margin-top:.4rem">
+    </details>
+    <p id="keystat" style="font-size:.85rem;color:var(--dim);margin-top:.5rem"></p>
+  </div>
+
+  <div class="card">
+    <h3>2 · Mic</h3>
+    <p>One-time permission. The mic only opens while you're recording a gap — never during narration or dwells, so speaker playback is fine.</p>
+    <div class="btnrow"><button class="btn" id="mictest">Test mic</button><span id="micstat" style="font-size:.85rem;color:var(--dim)"></span></div>
+  </div>
+
+  <div class="card">
+    <h3>3 · Dwells</h3>
+    <p>Every timer starts at zero — how long do you want this? <span style="color:var(--ink)">0:00 means open</span>: the dwell runs until you tap. The sweep can move quickly today; <strong>many wants is the anchor — the long one.</strong></p>
+    <div id="durs"></div>
+    <p class="durnote">Dwells are silent audio, so they keep running if the screen locks. Speech windows need the screen on. During any dwell, "⟲ the instruction" plays the full station text — asks are counted in your export.</p>
+  </div>
+
+  <div class="btnrow">
+    <button class="btn big" id="begin">Begin</button>
+    <button class="btn quiet" id="resume" style="display:none">Resume session</button>
+    <button class="btn quiet" id="restart" style="display:none">Start over</button>
+  </div>
+</section>
+
+<!-- ============ SESSION ============ -->
+<section id="session" class="screen">
+  <p class="eyebrow" id="crumb"></p>
+  <h1 id="steptitle" style="font-size:1.5rem"></h1>
+  <div id="clockline">session <span id="clock">0:00</span> · sat <span id="satsum">0:00</span></div>
+  <div id="stage"></div>
+  <div class="btnrow">
+    <button class="btn" id="bigbtn"></button>
+    <button class="btn quiet" id="altbtn" style="display:none"></button>
+    <button class="btn quiet" id="skipbtn">Skip →</button>
+  </div>
+  <div class="err" id="errbox" style="display:none"></div>
+  <div class="feed"><h3>Transcripts this session</h3><div id="feed"></div></div>
+</section>
+
+<!-- ============ DONE ============ -->
+<section id="done" class="screen">
+  <p class="eyebrow">Day 5 · export</p>
+  <h1>The day, in your words</h1>
+  <p class="sub">Copy this into the course thread — same ritual as always. Entries are editable on the session screen before you export.</p>
+  <textarea id="exporttext" readonly></textarea>
+  <div class="btnrow">
+    <button class="btn" id="copybtn">Copy</button>
+    <button class="btn quiet" id="backbtn">← Back to session</button>
+    <button class="btn quiet" id="newbtn">New session</button>
+  </div>
+</section>
+
+</main>
+
+<!-- traveling pen — available at any step -->
+<div id="notedock" hidden>
+  <div id="notepanel" hidden>
+    <div id="notepen" contenteditable="true" data-ph="type or paste — or record"></div>
+    <div class="btnrow">
+      <button class="btn" id="noterec">● Record</button>
+      <button class="btn" id="notesave">Save</button>
+      <button class="btn quiet" id="notecancel">Cancel</button>
+    </div>
+    <div class="err" id="noteerr" style="display:none"></div>
+  </div>
+  <button id="notebtn">✎ thought</button>
+</div>
+
+<audio id="au" preload="auto" playsinline></audio>
+<script>
+function S(id,crumb,title){return {t:'say',id:id,crumb:crumb,title:title}}
+function SPK(key,label,prompt,title){return {t:'speak',key:key,label:label,prompt:prompt,crumb:'Speech window',title:title}}
+function DW(key,title,cue){return {t:'dwell',key:key,crumb:'Dwell',title:title,cue:cue}}
+window.DAYCFG={
+ ns:'owaudio_d5_', audio:'../audio/', gate:'../gate.json',
+ exportTitle:'Day 5 · The tamperers — audio session export',
+ stationPenPrefix:'d5_st_',
+ pens:['d5_soak1','d5_soak2','d5_list','d5_sweep','d5_sayitback'],
+ dwells:[['settle','Settle'],['ground','Ground (doorstep)'],['pelvis','Pelvis'],['midsection','Midsection'],
+  ['chest','Chest'],['neck','Neck'],['head','Head'],['wholebody','Whole body'],
+  ['manywants','Many wants — the anchor'],['everything','Everything']],
+ seq:[
+  S('d5_arrive','Arrive','Arrive'),
+  S('d5_soak1','Soak · 1 of 3','Don’t-wanting isn’t a want'),
+  SPK('d5_soak1','✎ d5_soak1 · the lens','prompt_generic','In your own words'),
+  S('d5_soak1_verify','Soak · 1 of 3','The verify'),
+  S('d5_soak2','Soak · 2 of 3','The three stories'),
+  SPK('d5_soak2','✎ d5_soak2 · the stories','prompt_generic','In your own words'),
+  S('d5_soak2_verify','Soak · 2 of 3','The verify'),
+  S('d5_soak3','Soak · 3 of 3','Your words — and the advance list'),
+  SPK('d5_list','✎ d5_list · the advance list','','The tamperers you can see coming'),
+  S('d5_practice_intro','Practice','Sparse — you carry the instructions'),
+  S('name_settle','Practice · 1 of 10','Settle'),
+  DW('settle','Settle','st_settle'),
+  S('name_ground','Practice · 2 of 10','Ground (doorstep)'),
+  DW('ground','Ground','d4_st_ground'),
+  S('name_pelvis','Practice · 3 of 10','Pelvis'),
+  DW('pelvis','Pelvis','d4_st_pelvis'),
+  S('name_midsection','Practice · 4 of 10','Midsection'),
+  DW('midsection','Midsection','d4_st_midsection'),
+  S('name_chest','Practice · 5 of 10','Chest'),
+  DW('chest','Chest','d4_st_chest'),
+  S('name_neck','Practice · 6 of 10','Neck'),
+  DW('neck','Neck','d4_st_neck'),
+  S('name_head','Practice · 7 of 10','Head'),
+  DW('head','Head','d4_st_head'),
+  S('name_wholebody','Practice · 8 of 10','Whole body'),
+  DW('wholebody','Whole body','d4_st_wholebody'),
+  SPK('d5_sweep','Sweep — notes','d5_prompt_sweep','From recall — anything to note?'),
+  S('d5_anchor','Practice · 9 of 10','Many wants at once — the anchor'),
+  DW('manywants','Many wants at once','d5_anchor'),
+  SPK('d5_st_manywants','Many wants — the inventory','d5_prompt_inventory','Name what you caught'),
+  S('name_everything','Practice · 10 of 10','Everything'),
+  DW('everything','Everything','d4_st_everything'),
+  S('d5_sayitback','Say it back','What is a don’t-want?'),
+  SPK('d5_sayitback','✎ d5_sayitback · the tamperers','','What is a don’t-want?'),
+  S('d5_sayitback_sources','Say it back','The course’s answer'),
+  SPK('feedback','Feedback','prompt_feedback','For the build'),
+  S('d5_close','Close','Into the field')
+ ]
+};
+</script>
+<script src="../player.js"></script>
+</body>
+</html>
