@@ -13,6 +13,7 @@ var SEQ=C.seq, DWELLS=C.dwells;
 var idx=Number(load('idx'))||0;
 var tx=jload('tx',{});
 var sat=jload('sat',{});
+var cues=jload('cues',{});
 var t0=Number(load('t0'))||0;
 var au=document.getElementById('au');
 var micStream=null, rec=null, chunks=[], recTimer=null, recStart=0, lastBlob=null, lastKey=null;
@@ -99,8 +100,8 @@ document.getElementById('begin').addEventListener('click',function(){
 document.getElementById('resume').addEventListener('click',function(){wake();show('session');go(idx)});
 document.getElementById('restart').addEventListener('click',function(){resetSession();renderFeed();
   document.getElementById('resume').style.display='none';document.getElementById('restart').style.display='none'});
-function resetSession(){idx=0;tx={};sat={};t0=Date.now();
-  save('idx','0');save('tx','{}');save('sat','{}');save('t0',String(t0))}
+function resetSession(){idx=0;tx={};sat={};cues={};t0=Date.now();
+  save('idx','0');save('tx','{}');save('sat','{}');save('cues','{}');save('t0',String(t0))}
 
 /* ---------- wake lock ---------- */
 var wl=null;
@@ -120,7 +121,7 @@ function setButtons(main,mainFn,alt,altFn){
 function err(msg){errbox.style.display=msg?'block':'none';errbox.textContent=msg||''}
 
 function go(i){
-  clearInterval(dwellIv);dwellIv=null;err('');
+  clearInterval(dwellIv);dwellIv=null;err('');narrActive=false;
   if(i>=SEQ.length){finish();return}
   idx=i;save('idx',String(i));
   var st=SEQ[i];crumb.textContent=st.crumb;title.textContent=st.title;
@@ -130,15 +131,24 @@ function go(i){
 }
 skipbtn.addEventListener('click',function(){au.pause();au.onended=null;stopRec(true);go(idx+1)});
 
-/* ---------- narration ---------- */
+/* ---------- narration (transport: pause/play · −10s · restart) ---------- */
+var narrActive=false;
 function play(id,onend){au.onended=onend||null;au.src=C.audio+id+'.mp3';au.play().catch(function(e){err('Tap play — '+e.name)})}
-function doSay(st){
-  setStage('<span class="word">narration</span>');
+function narrUI(id,onend){
+  narrActive=true;
+  setStage('<span class="word">narration</span>'+
+    '<div class="transport"><button id="tp_back">−10s</button><button id="tp_start">↺ start</button></div>');
+  function playing(){if(au.paused){au.play().catch(function(){})}bigbtn.textContent='Pause'}
+  document.getElementById('tp_back').addEventListener('click',function(){
+    au.currentTime=Math.max(0,(au.currentTime||0)-10);playing()});
+  document.getElementById('tp_start').addEventListener('click',function(){
+    au.currentTime=0;playing()});
   setButtons('Pause',function(){
-    if(au.paused){au.play();bigbtn.textContent='Pause'}else{au.pause();bigbtn.textContent='Play'}
-  },'Replay',function(){play(st.id,function(){go(idx+1)})});
-  play(st.id,function(){go(idx+1)});
+    if(au.paused){playing()}else{au.pause();bigbtn.textContent='Play'}
+  },null,null);
+  play(id,function(){narrActive=false;onend()});
 }
+function doSay(st){narrUI(st.id,function(){go(idx+1)})}
 
 /* ---------- dwell: looped silence -> chime ---------- */
 function doDwell(st){
@@ -151,8 +161,15 @@ function doDwell(st){
     if(!dwellOpen&&el>=dur){endDwell(st)}
   }
   dwellIv=setInterval(tick,500);tick();
-  setButtons(dwellOpen?'End dwell':'End early',function(){endDwell(st)},null,null);
+  setButtons(dwellOpen?'End dwell':'End early',function(){endDwell(st)},
+    st.cue?'⟲ the instruction':null,st.cue?function(){playCue(st)}:null);
   loopSilence();
+}
+/* sparse mode: full instruction only on request — each ask is logged (the miss record) */
+function playCue(st){
+  cues[st.key]=(cues[st.key]||0)+1;save('cues',JSON.stringify(cues));
+  au.onended=function(){loopSilence()};
+  au.src=C.audio+st.cue+'.mp3';au.play().catch(function(){loopSilence()});
 }
 function loopSilence(){au.onended=function(){dwellLoops++;loopSilence()};au.src=C.audio+'silence30.mp3';au.play().catch(function(){})}
 function endDwell(st){
@@ -171,7 +188,7 @@ function doSpeak(st){
     setStage('<span class="word">'+st.title+(existing?'<br><em>already answered — record again to replace</em>':'')+'</span>');
     setButtons('● Record',startRec,'Continue →',function(){go(idx+1)});
   }
-  if(st.prompt){play(st.prompt,idle);setStage('<span class="word">…</span>');setButtons(null,null,null,null)}
+  if(st.prompt){narrUI(st.prompt,idle)}
   else idle();
 
   function startRec(){
@@ -245,7 +262,7 @@ function noteErr(m){noteerr.style.display=m?'block':'none';noteerr.textContent=m
 notebtn.addEventListener('click',function(){
   if(!notepanel.hidden){closeNote(false);return}
   pausedByNote=(!au.paused&&SEQ[idx]&&SEQ[idx].t!=='dwell');
-  if(pausedByNote){au.pause();if(SEQ[idx].t==='say')bigbtn.textContent='Play'}
+  if(pausedByNote){au.pause();if(narrActive)bigbtn.textContent='Play'}
   notepanel.hidden=false;notebtn.textContent='✕ close';notepen.focus();
 });
 document.getElementById('notecancel').addEventListener('click',function(){closeNote(false)});
@@ -261,7 +278,7 @@ function closeNote(saveIt){
     }
   }
   notepen.textContent='';noteErr('');notepanel.hidden=true;notebtn.textContent='✎ thought';
-  if(pausedByNote){au.play().catch(function(){});if(SEQ[idx]&&SEQ[idx].t==='say')bigbtn.textContent='Pause'}
+  if(pausedByNote){au.play().catch(function(){});if(narrActive)bigbtn.textContent='Pause'}
   pausedByNote=false;
 }
 function stopNoteRec(){if(nRec&&nRec.state!=='inactive')nRec.stop();else if(nStream){nStream.getTracks().forEach(function(t){t.stop()});nStream=null}}
@@ -309,11 +326,15 @@ renderFeed();
 /* ---------- export ---------- */
 function buildExport(){
   var out=['## '+C.exportTitle+' ('+new Date().toISOString().slice(0,10)+')',
-    '*session '+fmt((Date.now()-t0)/1000)+' · dwells sat '+fmt(satTotal())+'*',''];
+    '*session '+fmt((Date.now()-t0)/1000)+' · dwells sat '+fmt(satTotal())+'*'];
+  var cueable=SEQ.filter(function(s){return s.t==='dwell'&&s.cue}).length;
+  if(cueable)out.push('*recall: asked for the instruction at '+Object.keys(cues).length+' of '+cueable+' stations*');
+  out.push('');
   DWELLS.forEach(function(d){
     var k=d[0],note=tx[C.stationPenPrefix+k];
     if(!sat[k]&&!(note&&note.text))return;
-    out.push('**'+d[1].replace(' (optional)','')+'**'+(sat[k]?' — ✓ sat ('+fmt(sat[k])+')':''));
+    out.push('**'+d[1].replace(' (optional)','')+'**'+(sat[k]?' — ✓ sat ('+fmt(sat[k])+')':'')+
+      (cues[k]?' · ⟲ instruction'+(cues[k]>1?' ×'+cues[k]:''):''));
     if(note&&note.text)out.push(note.text);
     out.push('');
   });

@@ -46,6 +46,10 @@ input[type=password],input[type=text]{
 #stage .big{font-family:var(--mono);font-size:3rem;color:var(--ink);letter-spacing:.04em}
 #stage .word{font-family:var(--serif);font-size:1.05rem;color:var(--dim);max-width:26em}
 #stage .rec{color:var(--rose-deep);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.75rem}
+#stage .transport{display:flex;gap:.7rem;margin-top:1.1rem}
+#stage .transport button{font-size:.9rem;color:var(--dim);border:1px solid var(--line);
+  border-radius:10px;padding:.55rem 1.1rem;background:var(--bg)}
+#stage .transport button:hover{color:var(--rose-deep);border-color:var(--rose-faint)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 #stage .rec.live{animation:pulse 1.4s ease infinite}
 .feed{margin-top:1.6rem}
